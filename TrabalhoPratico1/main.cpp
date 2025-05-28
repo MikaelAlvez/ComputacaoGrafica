@@ -6,4 +6,4 @@
 #include <vector>
 #include <fstream>
 
-using namespace DirectX;
+/*using namespace DirectX;*/
