@@ -1,7 +1,6 @@
 Trabalho pratico 1 consistem na construção de uma aplicação gráfica utilizando Directx 12 que permita ao usuário criar Curvas de Bézier do tipo cúbica, ou seja, curvas que utilizam 4 pontos de controle, como ilustrado na figura 1.
 
-<img src="Figura1" alt="Figura 1">	<img src="Figura2" alt="Figura 2">
-Figura 1			Figura 2
+![Captura de tela 2025-05-28 194646](https://github.com/user-attachments/assets/00fea443-bbb7-479c-8567-4e7a84913a56)
 
 A aplicação deve se comportar da seguinte forma:
 • A posição dos	pontos P1, P2, P3 e P4 deve ser definida a partir da posição do	mouse, com o pressionamento do botão esquerdo do mouse.
