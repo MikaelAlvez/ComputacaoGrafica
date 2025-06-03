@@ -154,6 +154,35 @@ void CurvesBezier::Finalize()
     delete lineMesh;
     delete curves;
 }
+                                   
+//Assinatura raiz do pipeline
+void CurvesBezier::BuildRootSignature()
+{
+    //Descrição para uma assinatura vazia
+    D3D12_ROOT_SIGNATURE_DESC rootSigDesc = {};
+    rootSigDesc.NumParameters = 0;
+    rootSigDesc.pParameters = nullptr;
+    rootSigDesc.NumStaticSamplers = 0;
+    rootSigDesc.pStaticSamplers = nullptr;
+    rootSigDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+    //Serializa assinatura raiz
+    ID3DBlob* serializedRootSig = nullptr;
+    ID3DBlob* error = nullptr;
+
+    ThrowIfFailed(D3D12SerializeRootSignature(
+        &rootSigDesc,
+        D3D_ROOT_SIGNATURE_VERSION_1,
+        &serializedRootSig,
+        &error));
+
+    //Cria uma assinatura raiz vazia
+    ThrowIfFailed(graphics->Device()->CreateRootSignature(
+        0,
+        serializedRootSig->GetBufferPointer(),
+        serializedRootSig->GetBufferSize(),
+        IID_PPV_ARGS(&rootSignature)));
+}
 
     //Uso do motor - WinMain
     int APIENTRY WinMain(_In_ HINSTANCE hInstance,
