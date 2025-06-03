@@ -103,6 +103,58 @@ void CurvesBezier::Init()
     graphics->SubmitCommands();
 }
 
+void CurvesBezier::Display()
+{
+    //Limpa backbuffer
+    graphics->Clear(pipelineState);
+
+    //Submete comandos de configuração do pipeline
+    graphics->CommandList()->SetGraphicsRootSignature(rootSignature);
+
+    //Desenha icone;
+    graphics->CommandList()->IASetVertexBuffers(0, 1, geometry->VertexBufferView());
+    graphics->CommandList()->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    //Submete comando de desenho
+    graphics->CommandList()->DrawInstanced(6, 1, 0, 0);
+
+    //Desenha pontos de controle
+    graphics->CommandList()->IASetVertexBuffers(0, 1, pointsMesh->VertexBufferView());
+    graphics->CommandList()->DrawInstanced(6 * pointsCount, 1, 0, 0);
+
+    //Desenha linhas de controle
+    graphics->CommandList()->IASetVertexBuffers(0, 1, linesMesh->VertexBufferView());
+    graphics->CommandList()->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP);
+    graphics->CommandList()->DrawInstanced(pointsCount, 1, 0, 0);
+
+    //Desenha linha que segue mouse
+    graphics->CommandList()->IASetVertexBuffers(0, 1, lineMesh->VertexBufferView());
+    graphics->CommandList()->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP);
+    if (pointsCount >= 1) {
+        graphics->CommandList()->DrawInstanced(lineCount, 1, 0, 0);
+    }
+
+    //Desenha a curva;
+    graphics->CommandList()->IASetVertexBuffers(0, 1, curvesMesh->VertexBufferView());
+    graphics->CommandList()->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP);
+    graphics->CommandList()->DrawInstanced(amount, 1, 0, 0);
+
+    //Apresenta backbuffer
+    graphics->Present();
+}
+
+void CurvesBezier::Finalize()
+{
+    rootSignature->Release();
+    pipelineState->Release();
+    delete geometry;
+    delete pointsMesh;
+    delete linesMesh;
+    delete curvesMesh;
+    delete lineMesh;
+    delete curves;
+}
+
     //Uso do motor - WinMain
     int APIENTRY WinMain(_In_ HINSTANCE hInstance,
         _In_opt_ HINSTANCE hPrevInstance,
