@@ -467,6 +467,18 @@ void CurvesBezier::BuildRootSignature()
         IID_PPV_ARGS(&rootSignature)));
 }
 
+void CurvesBezier::BuildPipelineState()
+{
+    //Input Layout
+    D3D12_INPUT_ELEMENT_DESC inputLayout[2] =
+    {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+    };
+
+  
+}
+
     //Uso do motor - WinMain
     int APIENTRY WinMain(_In_ HINSTANCE hInstance,
         _In_opt_ HINSTANCE hPrevInstance,
