@@ -497,6 +497,35 @@ void CurvesBezier::BuildPipelineState()
     rasterizer.ForcedSampleCount = 0;
     rasterizer.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
+    //Color Blender
+    D3D12_BLEND_DESC blender = {};
+    blender.AlphaToCoverageEnable = FALSE;
+    blender.IndependentBlendEnable = FALSE;
+    const D3D12_RENDER_TARGET_BLEND_DESC defaultRenderTargetBlendDesc =
+    {
+        FALSE,FALSE,
+        D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+        D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+        D3D12_LOGIC_OP_NOOP,
+        D3D12_COLOR_WRITE_ENABLE_ALL,
+    };
+    for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+        blender.RenderTarget[i] = defaultRenderTargetBlendDesc;
+
+    //Depth Stencil
+    D3D12_DEPTH_STENCIL_DESC depthStencil = {};
+    depthStencil.DepthEnable = TRUE;
+    depthStencil.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+    depthStencil.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+    depthStencil.StencilEnable = FALSE;
+    depthStencil.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
+    depthStencil.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
+    const D3D12_DEPTH_STENCILOP_DESC defaultStencilOp =
+    { D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_COMPARISON_FUNC_ALWAYS };
+    depthStencil.FrontFace = defaultStencilOp;
+
+    depthStencil.BackFace = defaultStencilOp;
+
     vertexShader->Release();
     pixelShader->Release();
 }
