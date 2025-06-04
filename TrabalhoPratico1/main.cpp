@@ -486,7 +486,6 @@ void CurvesBezier::BuildPipelineState()
     //Rasterizer
     D3D12_RASTERIZER_DESC rasterizer = {};
     rasterizer.FillMode = D3D12_FILL_MODE_SOLID;
-    //rasterizer.FillMode = D3D12_FILL_MODE_WIREFRAME;
     rasterizer.CullMode = D3D12_CULL_MODE_BACK;
     rasterizer.FrontCounterClockwise = FALSE;
     rasterizer.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
@@ -498,7 +497,8 @@ void CurvesBezier::BuildPipelineState()
     rasterizer.ForcedSampleCount = 0;
     rasterizer.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
-   
+    vertexShader->Release();
+    pixelShader->Release();
 }
 
     //Uso do motor - WinMain
