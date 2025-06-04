@@ -483,7 +483,22 @@ void CurvesBezier::BuildPipelineState()
     D3DReadFileToBlob(L"Shaders/Vertex.cso", &vertexShader);
     D3DReadFileToBlob(L"Shaders/Pixel.cso", &pixelShader);
 
-    
+    //Rasterizer
+    D3D12_RASTERIZER_DESC rasterizer = {};
+    rasterizer.FillMode = D3D12_FILL_MODE_SOLID;
+    //rasterizer.FillMode = D3D12_FILL_MODE_WIREFRAME;
+    rasterizer.CullMode = D3D12_CULL_MODE_BACK;
+    rasterizer.FrontCounterClockwise = FALSE;
+    rasterizer.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
+    rasterizer.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+    rasterizer.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+    rasterizer.DepthClipEnable = TRUE;
+    rasterizer.MultisampleEnable = FALSE;
+    rasterizer.AntialiasedLineEnable = FALSE;
+    rasterizer.ForcedSampleCount = 0;
+    rasterizer.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+
+   
 }
 
     //Uso do motor - WinMain
