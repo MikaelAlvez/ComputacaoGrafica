@@ -476,7 +476,14 @@ void CurvesBezier::BuildPipelineState()
         { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
     };
 
-  
+    //Shaders
+    ID3DBlob* vertexShader;
+    ID3DBlob* pixelShader;
+
+    D3DReadFileToBlob(L"Shaders/Vertex.cso", &vertexShader);
+    D3DReadFileToBlob(L"Shaders/Pixel.cso", &pixelShader);
+
+    
 }
 
     //Uso do motor - WinMain
