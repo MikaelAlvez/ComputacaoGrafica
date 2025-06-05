@@ -526,6 +526,24 @@ void CurvesBezier::BuildPipelineState()
 
     depthStencil.BackFace = defaultStencilOp;
 
+    //Pipeline - PSO
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC pso = {};
+    pso.pRootSignature = rootSignature;
+    pso.VS = { reinterpret_cast<BYTE*>(vertexShader->GetBufferPointer()), vertexShader->GetBufferSize() };
+    pso.PS = { reinterpret_cast<BYTE*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize() };
+    pso.BlendState = blender;
+    pso.SampleMask = UINT_MAX;
+    pso.RasterizerState = rasterizer;
+    pso.DepthStencilState = depthStencil;
+    pso.InputLayout = { inputLayout, 2 };
+    pso.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    pso.NumRenderTargets = 1;
+    pso.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    pso.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    pso.SampleDesc.Count = graphics->Antialiasing();
+    pso.SampleDesc.Quality = graphics->Quality();
+    graphics->Device()->CreateGraphicsPipelineState(&pso, IID_PPV_ARGS(&pipelineState));
+
     vertexShader->Release();
     pixelShader->Release();
 }
