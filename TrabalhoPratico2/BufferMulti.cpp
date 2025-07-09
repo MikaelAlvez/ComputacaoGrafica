@@ -47,6 +47,7 @@ public:
     void Update();
     void Draw();
     void Finalize();
+    void AddObjectToScene(Geometry& newObj, float scaleX, float scaleY, float scaleZ);
     void BuildRootSignature();
     void BuildPipelineState();
 };
@@ -72,6 +73,32 @@ void BufferMulti::Init()
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f };
+
+    void BufferMulti::AddObjectToScene(Geometry & newObj, float scaleX = 0.5f, float scaleY = 0.5f, float scaleZ = 0.5f) {
+        graphics->ResetCommands();
+        //Colocando cor nos vertices
+        for (auto& v : newObj.vertices) {
+            v.color = XMFLOAT4(DirectX::Colors::DimGray);
+        }
+
+        //Colocando no vetor de vertices que estou usando para mudar a cor
+        vertices.push_back(newObj);
+
+        //Objeto
+        Object obj;
+        XMStoreFloat4x4(&obj.world,
+            XMMatrixScaling(scaleX, scaleY, scaleZ) *
+            XMMatrixTranslation(0.0f, 0.0f, 0.0f));
+
+        obj.mesh = new Mesh();
+        obj.mesh->VertexBuffer(newObj.VertexData(), newObj.VertexCount() * sizeof(Vertex), sizeof(Vertex));
+        obj.mesh->IndexBuffer(newObj.IndexData(), newObj.IndexCount() * sizeof(uint), DXGI_FORMAT_R32_UINT);
+        obj.mesh->ConstantBuffer(sizeof(ObjectConstants), 4);
+        obj.submesh.indexCount = newObj.IndexCount();
+        scene.push_back(obj);
+
+        graphics->SubmitCommands();
+    }
 }
 
 void BufferMulti::Update()
