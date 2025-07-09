@@ -84,6 +84,45 @@ void BufferMulti::Init()
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f };
 
+    //Inicializa a matriz de projeção
+    XMStoreFloat4x4(&Proj, XMMatrixPerspectiveFovLH(
+        XMConvertToRadians(45.0f),
+        window->AspectRatio(),
+        1.0f, 100.0f));
+
+    //Criação da Geometria: Vértices e Índices
+
+    Grid grid(3.0f, 3.0f, 20, 20);
+
+    for (auto& v : grid.vertices) v.color = XMFLOAT4(DirectX::Colors::DimGray);
+
+    vertices.push_back(grid);
+
+    //Alocação e Cópia de Vertex, Index e Constant Buffers para a GPU
+
+    //Grid
+    Object gridObj;
+    gridObj.mesh = new Mesh();
+    gridObj.world = Identity;
+    gridObj.mesh->VertexBuffer(grid.VertexData(), grid.VertexCount() * sizeof(Vertex), sizeof(Vertex));
+    gridObj.mesh->IndexBuffer(grid.IndexData(), grid.IndexCount() * sizeof(uint), DXGI_FORMAT_R32_UINT);
+    gridObj.mesh->ConstantBuffer(sizeof(ObjectConstants), 4);
+    gridObj.submesh.indexCount = grid.IndexCount();
+    scene.push_back(gridObj);
+
+    //Inicializa as viewports
+    StartViewPorts();
+    //Inicializa linhas divisorias
+    StartDivisionLines();
+
+    BuildRootSignature();
+    BuildPipelineState();
+
+    graphics->SubmitCommands();
+
+    timer.Start();
+}
+
     void BufferMulti::AddObjectToScene(Geometry & newObj, float scaleX = 0.5f, float scaleY = 0.5f, float scaleZ = 0.5f) {
         graphics->ResetCommands();
         //Colocando cor nos vertices
