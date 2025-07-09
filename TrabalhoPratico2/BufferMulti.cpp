@@ -53,6 +53,7 @@ public:
     void StartViewPorts();
     void StartDivisionLines();
     void DeselectObject();
+    void ObjectScale(float x, float y, float z);
     void BuildRootSignature();
     void BuildPipelineState();
 };
@@ -212,6 +213,22 @@ void BufferMulti::Init()
 
         //Reseta o índice de seleção
         tab = -1;
+        graphics->SubmitCommands();
+    }
+
+    void BufferMulti::ObjectScale(float x, float y, float z) {
+        graphics->ResetCommands();
+        //Mudando escala
+        XMMATRIX newWorld = XMMatrixScaling(x, y, z) * XMLoadFloat4x4(&scene[tab].world);
+        XMStoreFloat4x4(&scene[tab].world,
+            newWorld
+        );
+
+        ObjectConstants constants;
+        XMMATRIX wvp = newWorld * XMLoadFloat4x4(&View) * XMLoadFloat4x4(&Proj);
+        XMStoreFloat4x4(&constants.WorldViewProj, XMMatrixTranspose(wvp));
+        scene[tab].mesh->CopyConstants(&constants);
+
         graphics->SubmitCommands();
     }
 }
