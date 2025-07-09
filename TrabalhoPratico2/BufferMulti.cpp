@@ -15,9 +15,9 @@ class BufferMulti : public App
 {
 private:
     ID3D12RootSignature* rootSignature = nullptr;
-    
+
     //Criar duas pipeline state
-    ID3D12PipelineState* pipelineState[2]; 
+    ID3D12PipelineState* pipelineState[2];
     vector<Object> scene;
     vector<Geometry> vertices;
     Timer timer;
@@ -38,9 +38,9 @@ private:
     bool viewport = false;
 
     //Malha para linhas que dividem a tela
-    Mesh* LinhasDivisorias; 
+    Mesh* LinhasDivisorias;
     //Vetor de vertices para as linhas
-    Vertex linhas[4] = {}; 
+    Vertex linhas[4] = {};
 
 public:
     void Init();
@@ -67,15 +67,15 @@ void BufferMulti::Init()
     graphics->ResetCommands();
 
     //Parâmetros Iniciais da Câmera
- 
+
     //Controla rotação da câmera
     theta = XM_PIDIV4;
     phi = 1.3f;
     radius = 5.0f;
 
     //Última posição do mouse
-    lastMousePosX = (float) input->MouseX();
-    lastMousePosY = (float) input->MouseY();
+    lastMousePosX = (float)input->MouseX();
+    lastMousePosY = (float)input->MouseY();
 
     //Inicializa as matrizes Identity e View para a identidade
     Identity = View = {
@@ -122,270 +122,316 @@ void BufferMulti::Init()
 
     timer.Start();
 }
+void BufferMulti::AddObjectToScene(Geometry& newObj, float scaleX = 0.5f, float scaleY = 0.5f, float scaleZ = 0.5f) {
+    graphics->ResetCommands();
+    //Colocando cor nos vertices
+    for (auto& v : newObj.vertices) {
+        v.color = XMFLOAT4(DirectX::Colors::DimGray);
+    }
 
-    void BufferMulti::AddObjectToScene(Geometry & newObj, float scaleX = 0.5f, float scaleY = 0.5f, float scaleZ = 0.5f) {
-        graphics->ResetCommands();
-        //Colocando cor nos vertices
-        for (auto& v : newObj.vertices) {
+    //Colocando no vetor de vertices que estou usando para mudar a cor
+    vertices.push_back(newObj);
+
+    //Objeto
+    Object obj;
+    XMStoreFloat4x4(&obj.world,
+        XMMatrixScaling(scaleX, scaleY, scaleZ) *
+        XMMatrixTranslation(0.0f, 0.0f, 0.0f));
+
+    obj.mesh = new Mesh();
+    obj.mesh->VertexBuffer(newObj.VertexData(), newObj.VertexCount() * sizeof(Vertex), sizeof(Vertex));
+    obj.mesh->IndexBuffer(newObj.IndexData(), newObj.IndexCount() * sizeof(uint), DXGI_FORMAT_R32_UINT);
+    obj.mesh->ConstantBuffer(sizeof(ObjectConstants), 4);
+    obj.submesh.indexCount = newObj.IndexCount();
+    scene.push_back(obj);
+
+    graphics->SubmitCommands();
+}
+
+void BufferMulti::DeleteObjectToScene() {
+    graphics->ResetCommands();
+    if (scene.size() > 0) {
+        scene.erase(scene.begin() + tab);
+        vertices.erase(vertices.begin() + tab);
+        tab = -1;
+    }
+    graphics->SubmitCommands();
+}
+
+void BufferMulti::SelectObjectInScene() {
+    graphics->ResetCommands();
+
+    //Reverte a cor do objeto atual antes de selecionar o próximo
+    if (!scene.empty() && tab >= 0) {
+        for (auto& v : vertices[tab].vertices) {
             v.color = XMFLOAT4(DirectX::Colors::DimGray);
         }
 
-        //Colocando no vetor de vertices que estou usando para mudar a cor
-        vertices.push_back(newObj);
-
-        //Objeto
-        Object obj;
-        XMStoreFloat4x4(&obj.world,
-            XMMatrixScaling(scaleX, scaleY, scaleZ) *
-            XMMatrixTranslation(0.0f, 0.0f, 0.0f));
-
-        obj.mesh = new Mesh();
-        obj.mesh->VertexBuffer(newObj.VertexData(), newObj.VertexCount() * sizeof(Vertex), sizeof(Vertex));
-        obj.mesh->IndexBuffer(newObj.IndexData(), newObj.IndexCount() * sizeof(uint), DXGI_FORMAT_R32_UINT);
-        obj.mesh->ConstantBuffer(sizeof(ObjectConstants), 4);
-        obj.submesh.indexCount = newObj.IndexCount();
-        scene.push_back(obj);
-
-        graphics->SubmitCommands();
+        //Atualiza o buffer do objeto anterior
+        scene[tab].mesh->VertexBuffer(vertices[tab].VertexData(), vertices[tab].VertexCount() * sizeof(Vertex), sizeof(Vertex));
+        scene[tab].mesh->IndexBuffer(vertices[tab].IndexData(), vertices[tab].IndexCount() * sizeof(uint), DXGI_FORMAT_R32_UINT);
+        scene[tab].mesh->ConstantBuffer(sizeof(ObjectConstants), 4);
+        scene[tab].submesh.indexCount = vertices[tab].IndexCount();
     }
 
-    void BufferMulti::DeleteObjectToScene() {
-        graphics->ResetCommands();
-        if (scene.size() > 0) {
-            scene.erase(scene.begin() + tab);
-            vertices.erase(vertices.begin() + tab);
-            tab = -1;
+    //Avança para o próximo objeto
+    tab++;
+    if (tab >= scene.size()) {
+        //Volta ao primeiro objeto se ultrapassar o tamanho do vetor
+        tab = 0;
+    }
+
+    OutputDebugString(std::to_string(tab).c_str());
+
+    //Altera a cor do novo objeto selecionado
+    if (!scene.empty()) {
+        for (auto& v : vertices[tab].vertices) {
+            v.color = XMFLOAT4(DirectX::Colors::Red);
         }
-        graphics->SubmitCommands();
+
+        //Atualiza o buffer do objeto novo
+        scene[tab].mesh->VertexBuffer(vertices[tab].VertexData(), vertices[tab].VertexCount() * sizeof(Vertex), sizeof(Vertex));
+        scene[tab].mesh->IndexBuffer(vertices[tab].IndexData(), vertices[tab].IndexCount() * sizeof(uint), DXGI_FORMAT_R32_UINT);
+        scene[tab].mesh->ConstantBuffer(sizeof(ObjectConstants), 4);
+        scene[tab].submesh.indexCount = vertices[tab].IndexCount();
     }
 
-    void BufferMulti::SelectObjectInScene() {
-        graphics->ResetCommands();
+    graphics->SubmitCommands();
+}
 
-        //Reverte a cor do objeto atual antes de selecionar o próximo
-        if (!scene.empty() && tab >= 0) {
-            for (auto& v : vertices[tab].vertices) {
-                v.color = XMFLOAT4(DirectX::Colors::DimGray);
+void BufferMulti::StartViewPorts() {
+    //Viewport esquerda cima
+    views[0] = { 0.0f, 0.0f, float(window->Width() / 2), float(window->Height() / 2), 0.0f, 1.0f };
+
+    //Viewport direita cima
+    views[1] = { float(window->Width() / 2), 0.0f, float(window->Width() / 2), float(window->Height() / 2), 0.0f, 1.0f };
+
+    //Viewport esquerda baixo
+    views[2] = { 0.0f, float(window->Height() / 2), float(window->Width() / 2), float(window->Height() / 2), 0.0f, 1.0f };
+
+    //Viewport direita baixo
+    views[3] = { float(window->Width() / 2), float(window->Height() / 2), float(window->Width() / 2), float(window->Height() / 2), 0.0f, 1.0f };
+}
+
+void BufferMulti::StartDivisionLines() {
+    LinhasDivisorias = new Mesh();
+
+    float screenWidth = (float)window->Width();
+    float screenHeight = (float)window->Height();
+
+    //Inicio Y
+    linhas[0] = { XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT4(DirectX::Colors::White) };
+    //Fim Y
+    linhas[1] = { XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT4(DirectX::Colors::White) };
+    //Inicio X
+    linhas[2] = { XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT4(DirectX::Colors::White) };
+    //Fim Y
+    linhas[3] = { XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT4(DirectX::Colors::White) };
+
+    //Ordem dos indices
+    int indexBuffer[4] = { 0,1,2,3 };
+
+    ObjectConstants constants;
+    LinhasDivisorias->VertexBuffer(linhas, sizeof(Vertex) * 4, sizeof(Vertex));
+    LinhasDivisorias->IndexBuffer(indexBuffer, sizeof(int) * 4, DXGI_FORMAT_R32_UINT);
+    LinhasDivisorias->ConstantBuffer(sizeof(constants));
+    LinhasDivisorias->CopyConstants(&constants);
+}
+
+void BufferMulti::DeselectObject() {
+    graphics->ResetCommands();
+    if (!scene.empty() && tab >= 0) {
+        //Reverte a cor do objeto selecionado para a cor padrão
+        for (auto& v : vertices[tab].vertices) {
+            v.color = XMFLOAT4(DirectX::Colors::DimGray);
+        }
+
+        //Atualiza o buffer do objeto
+        scene[tab].mesh->VertexBuffer(vertices[tab].VertexData(), vertices[tab].VertexCount() * sizeof(Vertex), sizeof(Vertex));
+        scene[tab].mesh->IndexBuffer(vertices[tab].IndexData(), vertices[tab].IndexCount() * sizeof(uint), DXGI_FORMAT_R32_UINT);
+        scene[tab].mesh->ConstantBuffer(sizeof(ObjectConstants), 4);
+        scene[tab].submesh.indexCount = vertices[tab].IndexCount();
+    }
+
+    //Reseta o índice de seleção
+    tab = -1;
+    graphics->SubmitCommands();
+}
+
+void BufferMulti::ObjectScale(float x, float y, float z) {
+    graphics->ResetCommands();
+    //Mudando escala
+    XMMATRIX newWorld = XMMatrixScaling(x, y, z) * XMLoadFloat4x4(&scene[tab].world);
+    XMStoreFloat4x4(&scene[tab].world,
+        newWorld
+    );
+
+    ObjectConstants constants;
+    XMMATRIX wvp = newWorld * XMLoadFloat4x4(&View) * XMLoadFloat4x4(&Proj);
+    XMStoreFloat4x4(&constants.WorldViewProj, XMMatrixTranspose(wvp));
+    scene[tab].mesh->CopyConstants(&constants);
+
+    graphics->SubmitCommands();
+}
+
+void BufferMulti::ObjectRotation(float x, float y, float z) {
+    graphics->ResetCommands();
+    //Convertendo para radianos
+    x = XMConvertToRadians(x);
+    y = XMConvertToRadians(y);
+    z = XMConvertToRadians(z);
+
+    XMMATRIX w = XMLoadFloat4x4(&scene[tab].world);
+
+    //Aplica rotação
+    w = XMMatrixRotationX(x) * XMMatrixRotationY(y) * XMMatrixRotationZ(z) * w;
+
+
+    XMStoreFloat4x4(&scene[tab].world,
+        w);
+
+    //Atualiza o buffer
+    XMMATRIX wvp = w * XMLoadFloat4x4(&View) * XMLoadFloat4x4(&Proj);
+
+    ObjectConstants constants;
+    XMStoreFloat4x4(&constants.WorldViewProj, XMMatrixTranspose(wvp));
+    scene[tab].mesh->CopyConstants(&constants);
+
+
+    graphics->SubmitCommands();
+}
+
+void BufferMulti::ObjectTranslate(float x, float y, float z) {
+    graphics->ResetCommands();
+    //Matriz de mundo
+    XMMATRIX w = XMLoadFloat4x4(&scene[tab].world);
+
+    //Realizando translação
+    XMMATRIX t = XMMatrixTranslation(x, y, z);
+
+    XMMATRIX newWorld = t * w;
+
+    XMStoreFloat4x4(&scene[tab].world, newWorld);
+
+    XMMATRIX wvp = newWorld * XMLoadFloat4x4(&View) * XMLoadFloat4x4(&Proj);
+
+    ObjectConstants constants;
+    XMStoreFloat4x4(&constants.WorldViewProj, XMMatrixTranspose(wvp));
+    scene[tab].mesh->CopyConstants(&constants);
+
+    graphics->SubmitCommands();
+}
+
+void BufferMulti::LoadObject(const std::string& filename) {
+    //Novo objeto que virá dos arquivos
+    Geometry newObj;
+
+    std::ifstream file(filename);
+
+    if (!file.is_open()) {
+        return;
+    }
+
+    std::string line;
+    while (getline(file, line)) {
+        std::istringstream iss(line);
+        string prefix;
+        iss >> prefix;
+
+        if (prefix == "v") {
+            //Vértices (posições)
+            Vertex position;
+            iss >> position.pos.x >> position.pos.y >> position.pos.z;
+            position.color = XMFLOAT4(DirectX::Colors::DimGray);
+            newObj.vertices.push_back(position);
+        }
+        else if (prefix == "f") {
+            //Faces (índices de vértices)
+            uint32_t v1, v2, v3;
+            uint32_t n1, n2, n3;
+            char slash;
+            std::string faceStr;
+            getline(iss, faceStr);
+            std::istringstream faceStream(faceStr);
+
+            if (faceStr.find("//") != std::string::npos) {
+                faceStream >> v1 >> slash >> slash >> n1
+                    >> v2 >> slash >> slash >> n2
+                    >> v3 >> slash >> slash >> n3;
+                newObj.indices.push_back(v1 - 1);
+                newObj.indices.push_back(v2 - 1);
+                newObj.indices.push_back(v3 - 1);
             }
-
-            //Atualiza o buffer do objeto anterior
-            scene[tab].mesh->VertexBuffer(vertices[tab].VertexData(), vertices[tab].VertexCount() * sizeof(Vertex), sizeof(Vertex));
-            scene[tab].mesh->IndexBuffer(vertices[tab].IndexData(), vertices[tab].IndexCount() * sizeof(uint), DXGI_FORMAT_R32_UINT);
-            scene[tab].mesh->ConstantBuffer(sizeof(ObjectConstants), 4);
-            scene[tab].submesh.indexCount = vertices[tab].IndexCount();
-        }
-
-        //Avança para o próximo objeto
-        tab++;
-        if (tab >= scene.size()) {
-            //Volta ao primeiro objeto se ultrapassar o tamanho do vetor
-            tab = 0;
-        }
-
-        OutputDebugString(std::to_string(tab).c_str());
-
-        //Altera a cor do novo objeto selecionado
-        if (!scene.empty()) {
-            for (auto& v : vertices[tab].vertices) {
-                v.color = XMFLOAT4(DirectX::Colors::Red);
-            }
-
-            //Atualiza o buffer do objeto novo
-            scene[tab].mesh->VertexBuffer(vertices[tab].VertexData(), vertices[tab].VertexCount() * sizeof(Vertex), sizeof(Vertex));
-            scene[tab].mesh->IndexBuffer(vertices[tab].IndexData(), vertices[tab].IndexCount() * sizeof(uint), DXGI_FORMAT_R32_UINT);
-            scene[tab].mesh->ConstantBuffer(sizeof(ObjectConstants), 4);
-            scene[tab].submesh.indexCount = vertices[tab].IndexCount();
-        }
-
-        graphics->SubmitCommands();
-    }
-
-    void BufferMulti::StartViewPorts() {
-        //Viewport esquerda cima
-        views[0] = { 0.0f, 0.0f, float(window->Width() / 2), float(window->Height() / 2), 0.0f, 1.0f };
-
-        //Viewport direita cima
-        views[1] = { float(window->Width() / 2), 0.0f, float(window->Width() / 2), float(window->Height() / 2), 0.0f, 1.0f };
-
-        //Viewport esquerda baixo
-        views[2] = { 0.0f, float(window->Height() / 2), float(window->Width() / 2), float(window->Height() / 2), 0.0f, 1.0f };
-
-        //Viewport direita baixo
-        views[3] = { float(window->Width() / 2), float(window->Height() / 2), float(window->Width() / 2), float(window->Height() / 2), 0.0f, 1.0f };
-    }
-
-    void BufferMulti::StartDivisionLines() {
-        LinhasDivisorias = new Mesh();
-
-        float screenWidth = (float)window->Width();
-        float screenHeight = (float)window->Height();
-
-        //Inicio Y
-        linhas[0] = { XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT4(DirectX::Colors::White) };
-        //Fim Y
-        linhas[1] = { XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT4(DirectX::Colors::White) };
-        //Inicio X
-        linhas[2] = { XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT4(DirectX::Colors::White) };
-        //Fim Y
-        linhas[3] = { XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT4(DirectX::Colors::White) };
-
-        //Ordem dos indices
-        int indexBuffer[4] = { 0,1,2,3 };
-
-        ObjectConstants constants;
-        LinhasDivisorias->VertexBuffer(linhas, sizeof(Vertex) * 4, sizeof(Vertex));
-        LinhasDivisorias->IndexBuffer(indexBuffer, sizeof(int) * 4, DXGI_FORMAT_R32_UINT);
-        LinhasDivisorias->ConstantBuffer(sizeof(constants));
-        LinhasDivisorias->CopyConstants(&constants);
-    }
-
-    void BufferMulti::DeselectObject() {
-        graphics->ResetCommands();
-        if (!scene.empty() && tab >= 0) {
-            //Reverte a cor do objeto selecionado para a cor padrão
-            for (auto& v : vertices[tab].vertices) {
-                v.color = XMFLOAT4(DirectX::Colors::DimGray);
-            }
-
-            //Atualiza o buffer do objeto
-            scene[tab].mesh->VertexBuffer(vertices[tab].VertexData(), vertices[tab].VertexCount() * sizeof(Vertex), sizeof(Vertex));
-            scene[tab].mesh->IndexBuffer(vertices[tab].IndexData(), vertices[tab].IndexCount() * sizeof(uint), DXGI_FORMAT_R32_UINT);
-            scene[tab].mesh->ConstantBuffer(sizeof(ObjectConstants), 4);
-            scene[tab].submesh.indexCount = vertices[tab].IndexCount();
-        }
-
-        //Reseta o índice de seleção
-        tab = -1;
-        graphics->SubmitCommands();
-    }
-
-    void BufferMulti::ObjectScale(float x, float y, float z) {
-        graphics->ResetCommands();
-        //Mudando escala
-        XMMATRIX newWorld = XMMatrixScaling(x, y, z) * XMLoadFloat4x4(&scene[tab].world);
-        XMStoreFloat4x4(&scene[tab].world,
-            newWorld
-        );
-
-        ObjectConstants constants;
-        XMMATRIX wvp = newWorld * XMLoadFloat4x4(&View) * XMLoadFloat4x4(&Proj);
-        XMStoreFloat4x4(&constants.WorldViewProj, XMMatrixTranspose(wvp));
-        scene[tab].mesh->CopyConstants(&constants);
-
-        graphics->SubmitCommands();
-    }
-
-    void BufferMulti::ObjectRotation(float x, float y, float z) {
-        graphics->ResetCommands();
-        //Convertendo para radianos
-        x = XMConvertToRadians(x);
-        y = XMConvertToRadians(y);
-        z = XMConvertToRadians(z);
-
-        XMMATRIX w = XMLoadFloat4x4(&scene[tab].world);
-
-        //Aplica rotação
-        w = XMMatrixRotationX(x) * XMMatrixRotationY(y) * XMMatrixRotationZ(z) * w;
-
-
-        XMStoreFloat4x4(&scene[tab].world,
-            w);
-
-        //Atualiza o buffer
-        XMMATRIX wvp = w * XMLoadFloat4x4(&View) * XMLoadFloat4x4(&Proj);
-
-        ObjectConstants constants;
-        XMStoreFloat4x4(&constants.WorldViewProj, XMMatrixTranspose(wvp));
-        scene[tab].mesh->CopyConstants(&constants);
-
-
-        graphics->SubmitCommands();
-    }
-
-    void BufferMulti::ObjectTranslate(float x, float y, float z) {
-        graphics->ResetCommands();
-        //Matriz de mundo
-        XMMATRIX w = XMLoadFloat4x4(&scene[tab].world);
-
-        //Realizando translação
-        XMMATRIX t = XMMatrixTranslation(x, y, z);
-
-        XMMATRIX newWorld = t * w;
-
-        XMStoreFloat4x4(&scene[tab].world, newWorld);
-
-        XMMATRIX wvp = newWorld * XMLoadFloat4x4(&View) * XMLoadFloat4x4(&Proj);
-
-        ObjectConstants constants;
-        XMStoreFloat4x4(&constants.WorldViewProj, XMMatrixTranspose(wvp));
-        scene[tab].mesh->CopyConstants(&constants);
-
-        graphics->SubmitCommands();
-    }
-
-    void BufferMulti::LoadObject(const std::string& filename) {
-        //Novo objeto que virá dos arquivos
-        Geometry newObj;
-
-        std::ifstream file(filename);
-
-        if (!file.is_open()) {
-            return;
-        }
-
-        std::string line;
-        while (getline(file, line)) {
-            std::istringstream iss(line);
-            string prefix;
-            iss >> prefix;
-
-            if (prefix == "v") {
-                //Vértices (posições)
-                Vertex position;
-                iss >> position.pos.x >> position.pos.y >> position.pos.z;
-                position.color = XMFLOAT4(DirectX::Colors::DimGray);
-                newObj.vertices.push_back(position);
-            }
-            else if (prefix == "f") {
-                //Faces (índices de vértices)
-                uint32_t v1, v2, v3;
-                uint32_t n1, n2, n3;
-                char slash;
-                std::string faceStr;
-                getline(iss, faceStr);
-                std::istringstream faceStream(faceStr);
-
-                if (faceStr.find("//") != std::string::npos) {
-                    faceStream >> v1 >> slash >> slash >> n1
-                        >> v2 >> slash >> slash >> n2
-                        >> v3 >> slash >> slash >> n3;
-                    newObj.indices.push_back(v1 - 1);
-                    newObj.indices.push_back(v2 - 1);
-                    newObj.indices.push_back(v3 - 1);
-                }
-                else {
-                    uint32_t vt1, vt2, vt3;
-                    faceStream >> v1 >> slash >> vt1 >> slash >> n1
-                        >> v2 >> slash >> vt2 >> slash >> n2
-                        >> v3 >> slash >> vt3 >> slash >> n3;
-                    newObj.indices.push_back(v1 - 1);
-                    newObj.indices.push_back(v2 - 1);
-                    newObj.indices.push_back(v3 - 1);
-                }
+            else {
+                uint32_t vt1, vt2, vt3;
+                faceStream >> v1 >> slash >> vt1 >> slash >> n1
+                    >> v2 >> slash >> vt2 >> slash >> n2
+                    >> v3 >> slash >> vt3 >> slash >> n3;
+                newObj.indices.push_back(v1 - 1);
+                newObj.indices.push_back(v2 - 1);
+                newObj.indices.push_back(v3 - 1);
             }
         }
-
-        if (newObj.vertices.size() > 0) {
-            AddObjectToScene(newObj);
-        }
-
-        file.close();
     }
+
+    if (newObj.vertices.size() > 0) {
+        AddObjectToScene(newObj);
+    }
+
+    file.close();
 }
 
 void BufferMulti::Update()
-{   
+{
+    //Comandos de adição
+    {
+        //Adicionar BOX: B
+        if (input->KeyPress('B') || input->KeyPress('b')) {
+            //Cria novo Box
+            Box newBox(2.0f, 2.0f, 2.0f);
+            AddObjectToScene(newBox);
+        }
 
+        //Adicionar Cylinder: C
+        if (input->KeyPress('C') || input->KeyPress('c')) {
+            //Cria novo Cylinder
+            Cylinder newCylinder(1.0f, 0.5f, 3.0f, 20, 10);
+            AddObjectToScene(newCylinder);
+        }
+
+        //Adicionar Sphere: S 
+        if (input->KeyPress('S') || input->KeyPress('s')) {
+            //Cria nova Sphere
+            Sphere newSphere(1.0f, 20, 20);
+            AddObjectToScene(newSphere);
+        }
+
+        //Adicionar GeoSphere: G 
+        if (input->KeyPress('G') || input->KeyPress('g')) {
+            //Cria nova GeoSphere
+            GeoSphere newGeoSphere(1.0f, 20);
+            AddObjectToScene(newGeoSphere);
+        }
+
+        //Adicionar Plane(Grid): P
+        if (input->KeyPress('P') || input->KeyPress('p')) {
+            //Cria novo Grid
+            Grid newGrid(3.0f, 3.0f, 20, 20);
+            AddObjectToScene(newGrid);
+        }
+
+        //Adicionar Quad: Q
+        if (input->KeyPress('Q') || input->KeyPress('q')) {
+            //Cria novo Quad
+            Quad newQuad(2.0f, 2.0f);
+            AddObjectToScene(newQuad);
+        }
+    }
+
+    //Comandos de transformação de mundo
+    {
+
+    }
 }
 
 void BufferMulti::Draw()
