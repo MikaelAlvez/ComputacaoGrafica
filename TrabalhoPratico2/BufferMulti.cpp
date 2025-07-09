@@ -49,6 +49,7 @@ public:
     void Finalize();
     void AddObjectToScene(Geometry& newObj, float scaleX, float scaleY, float scaleZ);
     void DeleteObjectToScene();
+    void SelectObjectInScene();
     void BuildRootSignature();
     void BuildPipelineState();
 };
@@ -108,6 +109,47 @@ void BufferMulti::Init()
             vertices.erase(vertices.begin() + tab);
             tab = -1;
         }
+        graphics->SubmitCommands();
+    }
+
+    void BufferMulti::SelectObjectInScene() {
+        graphics->ResetCommands();
+
+        //Reverte a cor do objeto atual antes de selecionar o próximo
+        if (!scene.empty() && tab >= 0) {
+            for (auto& v : vertices[tab].vertices) {
+                v.color = XMFLOAT4(DirectX::Colors::DimGray);
+            }
+
+            //Atualiza o buffer do objeto anterior
+            scene[tab].mesh->VertexBuffer(vertices[tab].VertexData(), vertices[tab].VertexCount() * sizeof(Vertex), sizeof(Vertex));
+            scene[tab].mesh->IndexBuffer(vertices[tab].IndexData(), vertices[tab].IndexCount() * sizeof(uint), DXGI_FORMAT_R32_UINT);
+            scene[tab].mesh->ConstantBuffer(sizeof(ObjectConstants), 4);
+            scene[tab].submesh.indexCount = vertices[tab].IndexCount();
+        }
+
+        //Avança para o próximo objeto
+        tab++;
+        if (tab >= scene.size()) {
+            //Volta ao primeiro objeto se ultrapassar o tamanho do vetor
+            tab = 0;
+        }
+
+        OutputDebugString(std::to_string(tab).c_str());
+
+        //Altera a cor do novo objeto selecionado
+        if (!scene.empty()) {
+            for (auto& v : vertices[tab].vertices) {
+                v.color = XMFLOAT4(DirectX::Colors::Red);
+            }
+
+            //Atualiza o buffer do objeto novo
+            scene[tab].mesh->VertexBuffer(vertices[tab].VertexData(), vertices[tab].VertexCount() * sizeof(Vertex), sizeof(Vertex));
+            scene[tab].mesh->IndexBuffer(vertices[tab].IndexData(), vertices[tab].IndexCount() * sizeof(uint), DXGI_FORMAT_R32_UINT);
+            scene[tab].mesh->ConstantBuffer(sizeof(ObjectConstants), 4);
+            scene[tab].submesh.indexCount = vertices[tab].IndexCount();
+        }
+
         graphics->SubmitCommands();
     }
 }
