@@ -48,6 +48,7 @@ public:
     void Draw();
     void Finalize();
     void AddObjectToScene(Geometry& newObj, float scaleX, float scaleY, float scaleZ);
+    void DeleteObjectToScene();
     void BuildRootSignature();
     void BuildPipelineState();
 };
@@ -97,6 +98,16 @@ void BufferMulti::Init()
         obj.submesh.indexCount = newObj.IndexCount();
         scene.push_back(obj);
 
+        graphics->SubmitCommands();
+    }
+
+    void BufferMulti::DeleteObjectToScene() {
+        graphics->ResetCommands();
+        if (scene.size() > 0) {
+            scene.erase(scene.begin() + tab);
+            vertices.erase(vertices.begin() + tab);
+            tab = -1;
+        }
         graphics->SubmitCommands();
     }
 }
