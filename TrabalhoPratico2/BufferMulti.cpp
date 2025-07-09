@@ -452,6 +452,10 @@ void BufferMulti::Update()
         // -Aumentar escala: CTRL + E + Seta cima
         // -Diminuir escala: CTRL + E + Seta baixo
 
+         // -Rotacionar no eixo X: CTRL + X + R
+         // -Rotacionar no eixo Y: CTRL + Y + R
+         // -Rotacionar no eixo Z: CTRL + Z + R
+
         //Aumentar escala do objeto selecionado com combinação de teclas
         if (input->KeyDown(VK_CONTROL) && ((input->KeyDown('E') || input->KeyDown('e')) && input->KeyPress(VK_UP))) {
             OutputDebugString("Entrei");
@@ -464,6 +468,28 @@ void BufferMulti::Update()
         if (input->KeyDown(VK_CONTROL) && ((input->KeyDown('E') || input->KeyDown('e')) && input->KeyPress(VK_DOWN))) {
             if (tab > -1 && tab < scene.size()) {
                 ObjectScale(0.9f, 0.9f, 0.9f);
+            }
+        }
+
+        //Rodar no eixo X
+        if (input->KeyDown(VK_CONTROL) && (input->KeyDown('X') || input->KeyDown('x')) && (input->KeyPress('R') || (input->KeyPress('r')))) {
+            OutputDebugString("Entrei");
+            if (tab > -1 && tab < scene.size()) {
+                ObjectRotation(-10.0f, 0.0f, 0.0f);
+            }
+        }
+
+        //Rodar no eixo Y
+        if (input->KeyDown(VK_CONTROL) && (input->KeyDown('Y') || input->KeyDown('y')) && (input->KeyPress('R') || (input->KeyPress('r')))) {
+            if (tab > -1 && tab < scene.size()) {
+                ObjectRotation(0.0f, -10.0f, 0.0f);
+            }
+        }
+
+        //Rodar no eixo Z
+        if (input->KeyDown(VK_CONTROL) && (input->KeyDown('Z') || input->KeyDown('z')) && (input->KeyPress('R') || (input->KeyPress('r')))) {
+            if (tab > -1 && tab < scene.size()) {
+                ObjectRotation(0.0f, 0.0f, -10.0f);
             }
         }
     }
