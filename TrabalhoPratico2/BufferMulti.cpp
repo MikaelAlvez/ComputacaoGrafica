@@ -430,7 +430,42 @@ void BufferMulti::Update()
 
     //Comandos de transformação de mundo
     {
+        //Tirar tab
+        if (input->KeyPress('K') || input->KeyPress('k')) {
+            DeselectObject();
+        }
 
+        //Apertar DEL para deletar figura selecionada;
+        if (input->KeyPress(VK_DELETE)) {
+
+            if (tab > -1) {
+                DeleteObjectToScene();
+            }
+
+        }
+
+        //Tab para selecionar figura
+        if (input->KeyPress(VK_TAB)) {
+            SelectObjectInScene();
+        }
+
+        // -Aumentar escala: CTRL + E + Seta cima
+        // -Diminuir escala: CTRL + E + Seta baixo
+
+        //Aumentar escala do objeto selecionado com combinação de teclas
+        if (input->KeyDown(VK_CONTROL) && ((input->KeyDown('E') || input->KeyDown('e')) && input->KeyPress(VK_UP))) {
+            OutputDebugString("Entrei");
+            if (tab > -1 && tab < scene.size()) {
+                ObjectScale(1.1f, 1.1f, 1.1f);
+            }
+        }
+
+        //Diminuir escala do objeto selecionado com combinação de teclas
+        if (input->KeyDown(VK_CONTROL) && ((input->KeyDown('E') || input->KeyDown('e')) && input->KeyPress(VK_DOWN))) {
+            if (tab > -1 && tab < scene.size()) {
+                ObjectScale(0.9f, 0.9f, 0.9f);
+            }
+        }
     }
 }
 
