@@ -55,6 +55,7 @@ public:
     void DeselectObject();
     void ObjectScale(float x, float y, float z);
     void ObjectRotation(float x, float y, float z);
+    void ObjectTranslate(float x, float y, float z);
     void BuildRootSignature();
     void BuildPipelineState();
 };
@@ -256,6 +257,27 @@ void BufferMulti::Init()
         XMStoreFloat4x4(&constants.WorldViewProj, XMMatrixTranspose(wvp));
         scene[tab].mesh->CopyConstants(&constants);
 
+
+        graphics->SubmitCommands();
+    }
+
+    void BufferMulti::ObjectTranslate(float x, float y, float z) {
+        graphics->ResetCommands();
+        //Matriz de mundo
+        XMMATRIX w = XMLoadFloat4x4(&scene[tab].world);
+
+        //Realizando translação
+        XMMATRIX t = XMMatrixTranslation(x, y, z);
+
+        XMMATRIX newWorld = t * w;
+
+        XMStoreFloat4x4(&scene[tab].world, newWorld);
+
+        XMMATRIX wvp = newWorld * XMLoadFloat4x4(&View) * XMLoadFloat4x4(&Proj);
+
+        ObjectConstants constants;
+        XMStoreFloat4x4(&constants.WorldViewProj, XMMatrixTranspose(wvp));
+        scene[tab].mesh->CopyConstants(&constants);
 
         graphics->SubmitCommands();
     }
