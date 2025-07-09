@@ -50,6 +50,7 @@ public:
     void AddObjectToScene(Geometry& newObj, float scaleX, float scaleY, float scaleZ);
     void DeleteObjectToScene();
     void SelectObjectInScene();
+    void StartViewPorts();
     void BuildRootSignature();
     void BuildPipelineState();
 };
@@ -151,6 +152,20 @@ void BufferMulti::Init()
         }
 
         graphics->SubmitCommands();
+    }
+
+    void BufferMulti::StartViewPorts() {
+        //Viewport esquerda cima
+        views[0] = { 0.0f, 0.0f, float(window->Width() / 2), float(window->Height() / 2), 0.0f, 1.0f };
+
+        //Viewport direita cima
+        views[1] = { float(window->Width() / 2), 0.0f, float(window->Width() / 2), float(window->Height() / 2), 0.0f, 1.0f };
+
+        //Viewport esquerda baixo
+        views[2] = { 0.0f, float(window->Height() / 2), float(window->Width() / 2), float(window->Height() / 2), 0.0f, 1.0f };
+
+        //Viewport direita baixo
+        views[3] = { float(window->Width() / 2), float(window->Height() / 2), float(window->Width() / 2), float(window->Height() / 2), 0.0f, 1.0f };
     }
 }
 
