@@ -51,6 +51,7 @@ public:
     void DeleteObjectToScene();
     void SelectObjectInScene();
     void StartViewPorts();
+    void StartDivisionLines();
     void BuildRootSignature();
     void BuildPipelineState();
 };
@@ -166,6 +167,31 @@ void BufferMulti::Init()
 
         //Viewport direita baixo
         views[3] = { float(window->Width() / 2), float(window->Height() / 2), float(window->Width() / 2), float(window->Height() / 2), 0.0f, 1.0f };
+    }
+
+    void BufferMulti::StartDivisionLines() {
+        LinhasDivisorias = new Mesh();
+
+        float screenWidth = (float)window->Width();
+        float screenHeight = (float)window->Height();
+
+        //Inicio Y
+        linhas[0] = { XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT4(DirectX::Colors::White) };
+        //Fim Y
+        linhas[1] = { XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT4(DirectX::Colors::White) };
+        //Inicio X
+        linhas[2] = { XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT4(DirectX::Colors::White) };
+        //Fim Y
+        linhas[3] = { XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT4(DirectX::Colors::White) };
+
+        //Ordem dos indices
+        int indexBuffer[4] = { 0,1,2,3 };
+
+        ObjectConstants constants;
+        LinhasDivisorias->VertexBuffer(linhas, sizeof(Vertex) * 4, sizeof(Vertex));
+        LinhasDivisorias->IndexBuffer(indexBuffer, sizeof(int) * 4, DXGI_FORMAT_R32_UINT);
+        LinhasDivisorias->ConstantBuffer(sizeof(constants));
+        LinhasDivisorias->CopyConstants(&constants);
     }
 }
 
