@@ -56,6 +56,8 @@ public:
     void ObjectScale(float x, float y, float z);
     void ObjectRotation(float x, float y, float z);
     void ObjectTranslate(float x, float y, float z);
+    void LoadObject(const std::string& filename);
+
     void BuildRootSignature();
     void BuildPipelineState();
 };
@@ -280,6 +282,65 @@ void BufferMulti::Init()
         scene[tab].mesh->CopyConstants(&constants);
 
         graphics->SubmitCommands();
+    }
+
+    void BufferMulti::LoadObject(const std::string& filename) {
+        //Novo objeto que virá dos arquivos
+        Geometry newObj;
+
+        std::ifstream file(filename);
+
+        if (!file.is_open()) {
+            return;
+        }
+
+        std::string line;
+        while (getline(file, line)) {
+            std::istringstream iss(line);
+            string prefix;
+            iss >> prefix;
+
+            if (prefix == "v") {
+                //Vértices (posições)
+                Vertex position;
+                iss >> position.pos.x >> position.pos.y >> position.pos.z;
+                position.color = XMFLOAT4(DirectX::Colors::DimGray);
+                newObj.vertices.push_back(position);
+            }
+            else if (prefix == "f") {
+                //Faces (índices de vértices)
+                uint32_t v1, v2, v3;
+                uint32_t n1, n2, n3;
+                char slash;
+                std::string faceStr;
+                getline(iss, faceStr);
+                std::istringstream faceStream(faceStr);
+
+                if (faceStr.find("//") != std::string::npos) {
+                    faceStream >> v1 >> slash >> slash >> n1
+                        >> v2 >> slash >> slash >> n2
+                        >> v3 >> slash >> slash >> n3;
+                    newObj.indices.push_back(v1 - 1);
+                    newObj.indices.push_back(v2 - 1);
+                    newObj.indices.push_back(v3 - 1);
+                }
+                else {
+                    uint32_t vt1, vt2, vt3;
+                    faceStream >> v1 >> slash >> vt1 >> slash >> n1
+                        >> v2 >> slash >> vt2 >> slash >> n2
+                        >> v3 >> slash >> vt3 >> slash >> n3;
+                    newObj.indices.push_back(v1 - 1);
+                    newObj.indices.push_back(v2 - 1);
+                    newObj.indices.push_back(v3 - 1);
+                }
+            }
+        }
+
+        if (newObj.vertices.size() > 0) {
+            AddObjectToScene(newObj);
+        }
+
+        file.close();
     }
 }
 
