@@ -54,6 +54,7 @@ public:
     void StartDivisionLines();
     void DeselectObject();
     void ObjectScale(float x, float y, float z);
+    void ObjectRotation(float x, float y, float z);
     void BuildRootSignature();
     void BuildPipelineState();
 };
@@ -228,6 +229,33 @@ void BufferMulti::Init()
         XMMATRIX wvp = newWorld * XMLoadFloat4x4(&View) * XMLoadFloat4x4(&Proj);
         XMStoreFloat4x4(&constants.WorldViewProj, XMMatrixTranspose(wvp));
         scene[tab].mesh->CopyConstants(&constants);
+
+        graphics->SubmitCommands();
+    }
+
+    void BufferMulti::ObjectRotation(float x, float y, float z) {
+        graphics->ResetCommands();
+        //Convertendo para radianos
+        x = XMConvertToRadians(x);
+        y = XMConvertToRadians(y);
+        z = XMConvertToRadians(z);
+
+        XMMATRIX w = XMLoadFloat4x4(&scene[tab].world);
+
+        //Aplica rotação
+        w = XMMatrixRotationX(x) * XMMatrixRotationY(y) * XMMatrixRotationZ(z) * w;
+
+
+        XMStoreFloat4x4(&scene[tab].world,
+            w);
+
+        //Atualiza o buffer
+        XMMATRIX wvp = w * XMLoadFloat4x4(&View) * XMLoadFloat4x4(&Proj);
+
+        ObjectConstants constants;
+        XMStoreFloat4x4(&constants.WorldViewProj, XMMatrixTranspose(wvp));
+        scene[tab].mesh->CopyConstants(&constants);
+
 
         graphics->SubmitCommands();
     }
