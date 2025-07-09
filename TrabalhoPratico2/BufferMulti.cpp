@@ -52,6 +52,7 @@ public:
     void SelectObjectInScene();
     void StartViewPorts();
     void StartDivisionLines();
+    void DeselectObject();
     void BuildRootSignature();
     void BuildPipelineState();
 };
@@ -192,6 +193,26 @@ void BufferMulti::Init()
         LinhasDivisorias->IndexBuffer(indexBuffer, sizeof(int) * 4, DXGI_FORMAT_R32_UINT);
         LinhasDivisorias->ConstantBuffer(sizeof(constants));
         LinhasDivisorias->CopyConstants(&constants);
+    }
+
+    void BufferMulti::DeselectObject() {
+        graphics->ResetCommands();
+        if (!scene.empty() && tab >= 0) {
+            //Reverte a cor do objeto selecionado para a cor padrão
+            for (auto& v : vertices[tab].vertices) {
+                v.color = XMFLOAT4(DirectX::Colors::DimGray);
+            }
+
+            //Atualiza o buffer do objeto
+            scene[tab].mesh->VertexBuffer(vertices[tab].VertexData(), vertices[tab].VertexCount() * sizeof(Vertex), sizeof(Vertex));
+            scene[tab].mesh->IndexBuffer(vertices[tab].IndexData(), vertices[tab].IndexCount() * sizeof(uint), DXGI_FORMAT_R32_UINT);
+            scene[tab].mesh->ConstantBuffer(sizeof(ObjectConstants), 4);
+            scene[tab].submesh.indexCount = vertices[tab].IndexCount();
+        }
+
+        //Reseta o índice de seleção
+        tab = -1;
+        graphics->SubmitCommands();
     }
 }
 
