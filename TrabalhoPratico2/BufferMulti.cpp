@@ -612,6 +612,47 @@ void BufferMulti::Update()
         //Restringe o raio (3 a 15 unidades)
         radius = radius < 3.0f ? 3.0f : (radius > 15.0f ? 15.0f : radius);
     }
+
+    lastMousePosX = mousePosX;
+    lastMousePosY = mousePosY;
+
+    //Converte coordenadas esféricas para cartesianas
+    float x = radius * sinf(phi) * cosf(theta);
+    float z = radius * sinf(phi) * sinf(theta);
+    float y = radius * cosf(phi);
+
+    //Visões 
+    {
+        //Constrói a matriz da câmera (view matrix) Pespectiva
+        XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
+        XMVECTOR target = XMVectorZero();
+        XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+        XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
+        XMStoreFloat4x4(&View, view);
+
+        //Carrega matriz de projeção em uma XMMATRIX
+        XMMATRIX proj = XMLoadFloat4x4(&Proj);
+
+        //Projeção ortográfica
+        XMMATRIX O = XMMatrixOrthographicLH(5, 5, 1.0f, 100.0f);
+
+        //Matriz de visualização ortografica e visao cima
+        XMVECTOR posUp = XMVectorSet(0, 10, 0, 1);
+        XMVECTOR targetUp = XMVectorZero();
+        XMVECTOR upUp = XMVectorSet(0, 0, -1, 0);
+        XMMATRIX VUp = XMMatrixLookAtLH(posUp, targetUp, upUp);
+
+        //Matriz de visualização ortográfica para a visão frontal
+        XMVECTOR posFront = XMVectorSet(0, 0, -10, 1);
+        XMVECTOR targetFront = XMVectorZero();
+        XMVECTOR upFront = XMVectorSet(0, 1, 0, 0);
+        XMMATRIX VFront = XMMatrixLookAtLH(posFront, targetFront, upFront);
+
+        //Matriz de visualização ortográfica para a visão direita
+        XMVECTOR posSide = XMVectorSet(10, 0, 0, 1);
+        XMVECTOR targetSide = XMVectorZero();
+        XMVECTOR upSide = XMVectorSet(0, 1, 0, 0);
+        XMMATRIX VSide = XMMatrixLookAtLH(posSide, targetSide, upSide);
 }
 
 void BufferMulti::Draw()
