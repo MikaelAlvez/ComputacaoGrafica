@@ -653,6 +653,44 @@ void BufferMulti::Update()
         XMVECTOR targetSide = XMVectorZero();
         XMVECTOR upSide = XMVectorSet(0, 1, 0, 0);
         XMMATRIX VSide = XMMatrixLookAtLH(posSide, targetSide, upSide);
+
+        //Ajusta o buffer constante de cada objeto
+
+        for (auto& obj : scene)
+        {
+            //Carrega matriz de mundo em uma XMMATRIX
+            XMMATRIX world = XMLoadFloat4x4(&obj.world);
+
+            //Constrói matriz combinada (world x view x proj)
+            XMMATRIX WorldViewProj = world * view * proj;
+
+            //Atualiza o buffer constante com a matriz combinada
+            ObjectConstants constants;
+            XMStoreFloat4x4(&constants.WorldViewProj, XMMatrixTranspose(WorldViewProj));
+            obj.mesh->CopyConstants(&constants); //Pespectiva
+
+            //Constrói matriz combinada (world x view x proj)
+            WorldViewProj = world * VFront * O;
+
+            //Atualiza o buffer constante com a matriz combinada
+            XMStoreFloat4x4(&constants.WorldViewProj, XMMatrixTranspose(WorldViewProj));
+            obj.mesh->CopyConstants(&constants, 1); //Ortogonal FRONT
+
+            //Constrói matriz combinada (world x view x proj)
+            WorldViewProj = world * VUp * O;
+
+            //Atualiza o buffer constante com a matriz combinada
+            XMStoreFloat4x4(&constants.WorldViewProj, XMMatrixTranspose(WorldViewProj));
+            obj.mesh->CopyConstants(&constants, 2); //Ortogonal UP
+
+            //Constrói matriz combinada (world x view x proj)
+            WorldViewProj = world * VSide * O;
+
+            //Atualiza o buffer constante com a matriz combinada
+            XMStoreFloat4x4(&constants.WorldViewProj, XMMatrixTranspose(WorldViewProj));
+            obj.mesh->CopyConstants(&constants, 3); //Ortogonal SIDE
+        }
+    }
 }
 
 void BufferMulti::Draw()
