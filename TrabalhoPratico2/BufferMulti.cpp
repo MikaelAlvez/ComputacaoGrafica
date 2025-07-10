@@ -700,7 +700,14 @@ void BufferMulti::Draw()
 
 void BufferMulti::Finalize()
 {
-   
+    rootSignature->Release();
+    pipelineState[0]->Release();
+    pipelineState[1]->Release();
+
+    delete LinhasDivisorias;
+
+    for (auto& obj : scene)
+        delete obj.mesh;
 }
 
 //D3D                                      
