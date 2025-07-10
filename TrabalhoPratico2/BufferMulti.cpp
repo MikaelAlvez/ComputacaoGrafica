@@ -459,6 +459,12 @@ void BufferMulti::Update()
         // -Transacionar no eixo X para Direira: CTRL + X + Seta direita
         // -Transacionar no eixo X para Esquerda: CTRL + X + Seta esquerda
 
+        // -Transacionar no eixo Y para Cima: CTRL + Y + Seta cima
+        // -Transacionar no eixo Y para Direira: CTRL + Y + Seta baixo
+
+        // -Transacionar no eixo Z para Tras: CTRL + Z + Seta direita
+        // -Transacionar no eixo Z para frente: CTRL + Z + Seta esquerda
+
         //Aumentar escala do objeto selecionado com combinação de teclas
         if (input->KeyDown(VK_CONTROL) && ((input->KeyDown('E') || input->KeyDown('e')) && input->KeyPress(VK_UP))) {
             OutputDebugString("Entrei");
@@ -695,7 +701,84 @@ void BufferMulti::Update()
 
 void BufferMulti::Draw()
 {
-   
+    //Limpa o backbuffer
+    graphics->Clear(pipelineState[0]);
+
+    if (!viewport) {
+        //Desenha objetos da cena
+        for (auto& obj : scene)
+        {
+            //Comandos de configuração do pipeline
+            ID3D12DescriptorHeap* descriptorHeap = obj.mesh->ConstantBufferHeap();
+            graphics->CommandList()->SetDescriptorHeaps(1, &descriptorHeap);
+            graphics->CommandList()->SetGraphicsRootSignature(rootSignature);
+            graphics->CommandList()->IASetVertexBuffers(0, 1, obj.mesh->VertexBufferView());
+            graphics->CommandList()->IASetIndexBuffer(obj.mesh->IndexBufferView());
+            graphics->CommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+            //Ajusta o buffer constante associado ao vertex shader
+            graphics->CommandList()->SetGraphicsRootDescriptorTable(0, obj.mesh->ConstantBufferHandle(0));
+
+            //Desenha objeto
+            graphics->CommandList()->DrawIndexedInstanced(
+                obj.submesh.indexCount, 1,
+                obj.submesh.startIndex,
+                obj.submesh.baseVertex,
+                0);
+        }
+    }
+    else {
+        //Seta Pipeline que desenha linhas
+        graphics->CommandList()->SetPipelineState(pipelineState[1]);
+        ID3D12DescriptorHeap* descriptorHeapLinhas = LinhasDivisorias->ConstantBufferHeap();
+        graphics->CommandList()->SetDescriptorHeaps(1, &descriptorHeapLinhas);
+        graphics->CommandList()->SetGraphicsRootSignature(rootSignature);
+        graphics->CommandList()->IASetVertexBuffers(0, 1, LinhasDivisorias->VertexBufferView());
+        graphics->CommandList()->IASetIndexBuffer(LinhasDivisorias->IndexBufferView());
+        graphics->CommandList()->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_LINELIST);
+
+        //Ajusta o buffer constante associado ao vertex shader
+        graphics->CommandList()->SetGraphicsRootDescriptorTable(0, LinhasDivisorias->ConstantBufferHandle(0));
+
+        //Desenha objeto
+        graphics->CommandList()->DrawIndexedInstanced(
+            4, 1,
+            0,
+            0,
+            0);
+
+        //Volta para triangulos
+        graphics->CommandList()->SetPipelineState(pipelineState[0]);
+        //For que passara pelos indices do ConstantBuffer que guardam as visões diferentes
+        for (int i{}; i < 4; i++) {
+
+            graphics->CommandList()->RSSetViewports(1, &views[i]);
+
+            for (auto& obj : scene)
+            {
+                //Comandos de configuração do pipeline
+                ID3D12DescriptorHeap* descriptorHeap = obj.mesh->ConstantBufferHeap();
+                graphics->CommandList()->SetDescriptorHeaps(1, &descriptorHeap);
+                graphics->CommandList()->SetGraphicsRootSignature(rootSignature);
+                graphics->CommandList()->IASetVertexBuffers(0, 1, obj.mesh->VertexBufferView());
+                graphics->CommandList()->IASetIndexBuffer(obj.mesh->IndexBufferView());
+                graphics->CommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+                //Ajusta o buffer constante associado ao vertex shader
+                graphics->CommandList()->SetGraphicsRootDescriptorTable(0, obj.mesh->ConstantBufferHandle(i));
+
+                //Desenha objeto
+                graphics->CommandList()->DrawIndexedInstanced(
+                    obj.submesh.indexCount, 1,
+                    obj.submesh.startIndex,
+                    obj.submesh.baseVertex,
+                    0);
+            }
+        }
+    }
+
+    //Apresenta o backbuffer na tela
+    graphics->Present();
 }
 
 void BufferMulti::Finalize()
@@ -706,7 +789,7 @@ void BufferMulti::Finalize()
 
     delete LinhasDivisorias;
 
-    for (auto& obj : scene)
+    for (auto& obj : scene)c
         delete obj.mesh;
 }
 
