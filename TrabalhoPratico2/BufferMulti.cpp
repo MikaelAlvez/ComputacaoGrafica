@@ -554,7 +554,7 @@ void BufferMulti::Update()
         if (input->KeyPress('2')) {
             LoadObject("monkey.obj");
         }
-
+            
         if (input->KeyPress('3')) {
             LoadObject("house.obj");
         }
@@ -566,6 +566,51 @@ void BufferMulti::Update()
         if (input->KeyPress('5')) {
             LoadObject("capsule.obj");
         }
+    }
+
+    //Fechar: ESC
+    if (input->KeyPress(VK_ESCAPE))
+        window->Close();
+
+    //Ativa ou desativa o giro do objeto: S
+    if (input->KeyPress('S'))
+    {
+        spinning = !spinning;
+
+        if (spinning)
+            timer.Start();
+        else
+            timer.Stop();
+    }
+
+    float mousePosX = (float)input->MouseX();
+    float mousePosY = (float)input->MouseY();
+
+    if (input->KeyDown(VK_LBUTTON))
+    {
+        //Cada pixel corresponde a 1/4 de grau
+        float dx = XMConvertToRadians(0.25f * (mousePosX - lastMousePosX));
+        float dy = XMConvertToRadians(0.25f * (mousePosY - lastMousePosY));
+
+        //Atualiza ângulos com base no deslocamento do mouse 
+        //Orbitar a câmera ao redor da caixa
+        theta += dx;
+        phi += dy;
+
+        //Restringe o ângulo de phi ]0-180[ graus
+        phi = phi < 0.1f ? 0.1f : (phi > (XM_PI - 0.1f) ? XM_PI - 0.1f : phi);
+    }
+    else if (input->KeyDown(VK_RBUTTON))
+    {
+        //Cada pixel corresponde a 0.05 unidades
+        float dx = 0.05f * (mousePosX - lastMousePosX);
+        float dy = 0.05f * (mousePosY - lastMousePosY);
+
+        //Atualiza o raio da câmera com base no deslocamento do mouse 
+        radius += dx - dy;
+
+        //Restringe o raio (3 a 15 unidades)
+        radius = radius < 3.0f ? 3.0f : (radius > 15.0f ? 15.0f : radius);
     }
 }
 
