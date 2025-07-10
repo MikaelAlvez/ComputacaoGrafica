@@ -541,7 +541,32 @@ void BufferMulti::Update()
     }
 
     //Comando de mudança de visualização e Carregamento de Objetos
-    
+    {
+        if (input->KeyPress('V') || input->KeyPress('v')) {
+            //Inverte booleano
+            viewport = !viewport;
+        }
+
+        if (input->KeyPress('1')) {
+            LoadObject("thorus.obj");
+        }
+
+        if (input->KeyPress('2')) {
+            LoadObject("monkey.obj");
+        }
+
+        if (input->KeyPress('3')) {
+            LoadObject("house.obj");
+        }
+
+        if (input->KeyPress('4')) {
+            LoadObject("ball.obj");
+        }
+
+        if (input->KeyPress('5')) {
+            LoadObject("capsule.obj");
+        }
+    }
 }
 
 void BufferMulti::Draw()
